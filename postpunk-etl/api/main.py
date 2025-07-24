@@ -17,6 +17,7 @@ import logging
 # Configuración
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')  # 'docker' o 'local'
 MEILISEARCH_URL = os.getenv('MEILISEARCH_URL', 'http://meilisearch:7700')
+MEILISEARCH_KEY = os.getenv('MEILISEARCH_KEY', 'postpunk-search-key-2024')
 MONGODB_URL = os.getenv('MONGODB_URL', 'mongodb://mongo:27017/postpunk')
 MEILISEARCH_INDEX = 'bands_search'
 
@@ -175,21 +176,26 @@ async def check_services():
     }
     
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            # Test MeiliSearch
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            # Test MeiliSearch con API key
             try:
-                response = await client.get(f"{MEILISEARCH_URL}/health")
+                headers = {"Authorization": f"Bearer {MEILISEARCH_KEY}"}
+                response = await client.get(f"{MEILISEARCH_URL}/health", headers=headers)
                 services["meilisearch"] = "healthy" if response.status_code == 200 else "unhealthy"
-            except:
+            except Exception as e:
+                logger.warning(f"MeiliSearch check failed: {e}")
                 services["meilisearch"] = "unreachable"
             
-            # Test MongoDB (a través de health check simple)
+            # Test MongoDB con conexión real
             try:
-                # En un entorno real, aquí haríamos una conexión a MongoDB
-                # Por ahora asumimos que si MeiliSearch funciona, MongoDB también
-                if services["meilisearch"] == "healthy":
-                    services["mongodb"] = "healthy"
-            except:
+                from pymongo import MongoClient
+                mongo_client = MongoClient(MONGODB_URL, serverSelectionTimeoutMS=5000)
+                # Intentar una operación simple para verificar conectividad
+                mongo_client.admin.command('ping')
+                services["mongodb"] = "healthy"
+                mongo_client.close()
+            except Exception as e:
+                logger.warning(f"MongoDB check failed: {e}")
                 services["mongodb"] = "unreachable"
                 
     except Exception as e:
@@ -236,9 +242,11 @@ async def search_meilisearch(q: str, limit: int, offset: int, filters: List[str]
         search_params["filter"] = " AND ".join(filters)
     
     async with httpx.AsyncClient() as client:
+        headers = {"Authorization": f"Bearer {MEILISEARCH_KEY}"}
         response = await client.post(
             f"{MEILISEARCH_URL}/indexes/{MEILISEARCH_INDEX}/search",
             json=search_params,
+            headers=headers,
             timeout=10.0
         )
         
@@ -395,9 +403,11 @@ async def autocomplete_bands(
             }
             
             async with httpx.AsyncClient() as client:
+                headers = {"Authorization": f"Bearer {MEILISEARCH_KEY}"}
                 response = await client.post(
                     f"{MEILISEARCH_URL}/indexes/{MEILISEARCH_INDEX}/search",
                     json=search_params,
+                    headers=headers,
                     timeout=5.0
                 )
                 
@@ -449,7 +459,8 @@ async def get_stats():
     if services["meilisearch"] == "healthy":
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"{MEILISEARCH_URL}/indexes/{MEILISEARCH_INDEX}/stats")
+                headers = {"Authorization": f"Bearer {MEILISEARCH_KEY}"}
+                response = await client.get(f"{MEILISEARCH_URL}/indexes/{MEILISEARCH_INDEX}/stats", headers=headers)
                 
                 if response.status_code == 200:
                     stats = response.json()
