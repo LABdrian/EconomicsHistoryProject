@@ -1,10 +1,10 @@
 # Multi-stage Dockerfile for PostPunk ETL
 # Stage 1: Build frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:18-slim AS frontend-builder
 
 WORKDIR /app/web
 COPY web/package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 COPY web/ ./
 RUN npm run build

@@ -1,0 +1,91 @@
+services:
+  # Aplicación principal (FastAPI + React)
+  postpunk-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongo:27017/postpunk
+      - MEILISEARCH_URL=http://meilisearch:7700
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - ENVIRONMENT=docker
+    depends_on:
+      - mongo
+      - meilisearch
+      - minio
+    volumes:
+      - ./api:/app/api
+    restart: unless-stopped
+    networks:
+      - postpunk-network
+
+  # MongoDB para almacenamiento de datos
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=postpunk
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+    networks:
+      - postpunk-network
+
+  # MeiliSearch para búsqueda full-text
+  meilisearch:
+    image: getmeili/meilisearch:v1.8
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_ENV=development
+      - MEILI_MASTER_KEY=postpunk-search-key-2024
+      - MEILI_NO_ANALYTICS=true
+    volumes:
+      - meilisearch_data:/meili_data
+    restart: unless-stopped
+    networks:
+      - postpunk-network
+
+  # MinIO para almacenamiento S3-compatible
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks:
+      - postpunk-network
+
+  # MongoDB Express para administración (opcional)
+  mongo-express:
+    image: mongo-express:1.0.2
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://mongo:27017/postpunk
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    networks:
+      - postpunk-network
+
+volumes:
+  mongo_data:
+  meilisearch_data:
+  minio_data:
+
+networks:
+  postpunk-network:
+    driver: bridge
