@@ -1,0 +1,17 @@
+apiVersion: v2
+name: postpunk-web
+description: PostPunk Archive - Web application for searching post-punk bands
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - postpunk
+  - music
+  - search
+  - web
+home: https://github.com/postpunk/postpunk-etl
+sources:
+  - https://github.com/postpunk/postpunk-etl
+maintainers:
+  - name: PostPunk Team
+    email: team@postpunk.local

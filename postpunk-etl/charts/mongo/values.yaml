@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: mongo
+  pullPolicy: IfNotPresent
+  tag: "7.0"
+
+service:
+  type: ClusterIP
+  port: 27017
+
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClass: ""
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+auth:
+  enabled: false
+  
+env:
+  - name: MONGO_INITDB_DATABASE
+    value: "postpunk"

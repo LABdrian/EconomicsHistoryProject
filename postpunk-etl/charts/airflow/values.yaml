@@ -1,0 +1,51 @@
+# Airflow configuration for PostPunk ETL
+executor: "KubernetesExecutor"
+
+images:
+  airflow:
+    repository: apache/airflow
+    tag: 2.9.0-python3.11
+    pullPolicy: IfNotPresent
+
+env:
+  - name: AIRFLOW__CORE__EXECUTOR
+    value: "KubernetesExecutor"
+  - name: AIRFLOW__KUBERNETES__NAMESPACE
+    value: "default"
+  - name: AIRFLOW__WEBSERVER__EXPOSE_CONFIG
+    value: "true"
+
+webserver:
+  service:
+    type: ClusterIP
+    port: 8080
+
+scheduler:
+  enabled: true
+
+workers:
+  enabled: false  # Using KubernetesExecutor
+
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresUser: true
+    postgresPassword: "airflow"
+    database: "airflow"
+
+redis:
+  enabled: false  # Not needed with KubernetesExecutor
+
+dags:
+  persistence:
+    enabled: false
+  gitSync:
+    enabled: false
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi

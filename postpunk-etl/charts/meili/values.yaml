@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: getmeili/meilisearch
+  pullPolicy: IfNotPresent
+  tag: "v1.8"
+
+service:
+  type: ClusterIP
+  port: 7700
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: ""
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+env:
+  - name: MEILI_ENV
+    value: "production"
+  - name: MEILI_NO_ANALYTICS
+    value: "true"

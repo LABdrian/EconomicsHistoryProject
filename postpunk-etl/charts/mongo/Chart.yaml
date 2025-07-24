@@ -1,0 +1,13 @@
+apiVersion: v2
+name: mongodb
+description: MongoDB Community deployment for PostPunk Archive
+type: application
+version: 7.0.0
+appVersion: "7.0"
+home: https://mongodb.com
+sources:
+  - https://github.com/mongodb/mongo
+keywords:
+  - database
+  - nosql
+  - mongodb
