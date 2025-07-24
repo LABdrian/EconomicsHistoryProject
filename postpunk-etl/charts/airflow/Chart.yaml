@@ -1,0 +1,14 @@
+apiVersion: v2
+name: airflow
+description: Apache Airflow deployment for PostPunk ETL
+type: application
+version: 2.9.0
+appVersion: "2.9.0"
+home: https://airflow.apache.org
+sources:
+  - https://github.com/apache/airflow
+keywords:
+  - airflow
+  - workflow
+  - orchestration
+  - etl
